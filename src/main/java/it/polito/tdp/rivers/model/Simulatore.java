@@ -6,7 +6,7 @@ import java.util.PriorityQueue;
 public class Simulatore {
 
 		//CODA DEGLI EVENTI
-		PriorityQueue<Event> coda=new PriorityQueue<>();
+		PriorityQueue<Event> coda;
 		//PARAMETRI DELLA SIMULAZIONE
 		private Double C;//quantità di acqua presente nel bacino di giorno in giorno
 		private River river;//il river per cui è richiesta la simulazione
@@ -28,15 +28,17 @@ public class Simulatore {
 		//METODI PER IMPOSTARE I PARAMETRI DELLA SIMULAZIONE
 		public void init(River r, Double k) {
 			//init value from user
+			this.coda=new PriorityQueue<>();
 			this.k=k;
 			this.river=r;
 			this.flows=r.getFlows();
 			//init value of the world
 			this.Q=k*river.getFlowAvg()*(60*60*24)*30;
-			this.f_min=0.8*r.getFlowAvg();
+			this.f_min=0.8*r.getFlowAvg()*(60*60*24);
 			this.giorniTotali=0;
 			this.giorniInsoddisfacenti=0;
 			this.Cmed=0.0;
+		
 			//fill the queue
 			for(Flow f:flows) {
 				Event e=new Event(f.getDay(),f);
@@ -50,34 +52,36 @@ public class Simulatore {
 		public void run() {
 			while(!this.coda.isEmpty()) {
 				Event e=this.coda.poll();
-				System.out.println(e);
+				//System.out.println(e);
 				processEvent(e);
 			}
 		}
 		private void processEvent(Event e) {
-			Double f_in=e.getFlow().getFlow();//il flusso in di questo giorno
+			Double f_in=e.getFlow().getFlow()*(60*60*24);//il flusso in entrata di questo giorno
 			Double f_out=this.f_min;
+			this.C+=f_in;
 			if(this.C>this.Q) {
 				//TRACIMAZIONE
+				this.C=this.Q;
 				this.Cmed+=this.C;
-				this.giorniInsoddisfacenti++;
-				this.giorniTotali++;
 			}
 			Double random=Math.random();
 			if(random<this.prob) {
 				//i campi devono essere irrigati
-				f_out=10*this.f_min;
+				f_out=10*f_out;
 			}
-			if(f_in>=f_out) {
-				this.C+=(f_in-f_out);
+			this.C-=f_out;
+			if(this.C<0) {
+				//sono nel caso in cui f_in<f_out
+				this.C=0.0;//ho finito l'acqua presente oggi nel bacino
+				this.Cmed+=this.C;
+				this.giorniInsoddisfacenti++;
+				this.giorniTotali++;
+			}else {
+				//sono nel caso in cui f_in>f_out perciò l'acqua nel bacino oggi aumenta
 				this.Cmed+=this.C;
 				this.giorniTotali++;
-			}else if(f_in<f_out) {
-				this.C-=(f_out-f_in);
-				this.Cmed+=this.C;
-				this.giorniTotali++;
 			}
-			
 		}
 		
 		//METODI PER RESTITUIRE I VALORI DI OUTPUT
@@ -85,7 +89,7 @@ public class Simulatore {
 			return this.giorniInsoddisfacenti;
 		}
 		 public Double getOccupazioneMedia() {
-			 return this.Cmed/this.giorniTotali;
+			 return (this.Cmed/this.giorniTotali);
 		 }
 
 }

@@ -62,7 +62,9 @@ public class FXMLController {
     		this.txtResult.setText("Il valore inserito di k deve essere maggiore di zero");
     	}
     	River chosen=this.boxRiver.getValue();
-       	if(chosen==null) {
+    	//System.out.println("chosen.getFlowAvg()-->"+chosen.getFlowAvg());
+       	
+    	if(chosen==null) {
        		this.txtResult.appendText("ERRORE NELLA SCELTA DEL FIUME!");
        		return;
        	}

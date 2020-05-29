@@ -62,7 +62,7 @@ public class RiversDAO {
 				f=new FlowInformation(res.getDate("prima_data").toLocalDate(), 
 						res.getDate("ultima_data").toLocalDate(), res.getInt("misurazioni"), 
 						res.getDouble("media"));
-				
+				r.setFlowAvg(res.getDouble("media"));
 			}
 
 			conn.close();
